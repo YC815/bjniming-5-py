@@ -5,8 +5,12 @@ from PIL import Image, ImageDraw, ImageFont
 from openai import OpenAI
 import re
 from instagrapi import Client
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)  # 允許所有來源請求
+
 user = ""  # 初始化 user 变量
 client = None  # 初始化 OpenAI 客户端对象
 
