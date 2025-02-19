@@ -18,60 +18,70 @@ client = OpenAI(api_key=os.getenv('API_KEY'))
 
 
 def process_and_upload_to_instagram(user_text):
-    global user, client
-    user = user_text
+    global client
 
-    # 使用 user 进行你的处理
-    ai_response = client.chat.completions.create(model="gpt-3.5-turbo", messages=[
-        {"role": "user", "content": "你是服務於濱江匿名網5.0的文字小編，請在68字內簡單幽默的回答「%s」這篇匿名訊息。" % (user)}
-    ])
-    ai_response = re.search(r"content='(.*?)', role", str(ai_response))
-    ai = str(ai_response.group(1))
-    print(ai)
-    user = user.replace('\n', ' ')
-    user = [user[i:i + 14] for i in range(0, len(user), 14)]
-    user = "\n".join(user)
+    # 生成 AI 回應
+    try:
+        ai_response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "user", "content": f"你是服務於濱江匿名網5.0的文字小編，請在68字內簡單幽默的回答「{user_text}」這篇匿名訊息。"}
+            ]
+        )
+        if ai_response and ai_response.choices:
+            ai = ai_response.choices[0].message.content.strip()
+        else:
+            ai = "無法生成回應，請稍後再試。"
+    except Exception as e:
+        print(f"AI 回應錯誤: {e}")
+        ai = "發生錯誤，請稍後再試。"
+
+    print(f"AI 回應: {ai}")
+
+    # 格式化使用者輸入與 AI 回應
+    user_text = user_text.replace('\n', ' ')
+    user_text = "\n".join([user_text[i:i + 14] for i in range(0, len(user_text), 14)])
     ai = ai.replace('\n', ' ')
-    ai = [ai[i:i + 17] for i in range(0, len(ai), 17)]
-    ai = "\n".join(ai)
-    # 打開圖片、繪制文本、保存圖片等代码
-    image = Image.open('public/ins.jpg')
-    draw = ImageDraw.Draw(image)
+    ai = "\n".join([ai[i:i + 17] for i in range(0, len(ai), 17)])
 
-    # 加載一個支持中文的字體
-    font_path = "public/NotoSansTC-Regular.ttf"  # 替換成你的中文字體路徑
-    font = ImageFont.truetype(font_path, size=66)  # 設置字體大小
+    # 打開圖片，繪制文本
+    try:
+        image = Image.open('public/ins.jpg')
+        draw = ImageDraw.Draw(image)
+        font_path = "public/NotoSansTC-Regular.ttf"  # 確保字體存在
+        font_user = ImageFont.truetype(font_path, size=66)
+        font_ai = ImageFont.truetype(font_path, size=56)
 
-    # 繪制文本
-    text_position_user = (50, 66)  # 調整文字的位置
-    text_color = 'rgb(255, 255, 255)'  # 設定文字顏色
-    draw.text(text_position_user, user, fill=text_color, font=font)
+        # 繪制使用者文字
+        draw.text((50, 66), user_text, fill='rgb(255, 255, 255)', font=font_user)
+        # 繪制 AI 回應
+        draw.text((50, 700), ai, fill='rgb(255, 255, 255)', font=font_ai)
 
-    font = ImageFont.truetype(font_path, size=56)
-    text_position_ai = (50, 700)  # 調整文字的位置
-    draw.text(text_position_ai, ai, fill=text_color, font=font)
+        # 保存圖片
+        image.load()
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])
+        background.save('public/ready.jpg', 'JPEG', quality=80)
+    except Exception as e:
+        print(f"圖片處理錯誤: {e}")
+        return
 
-    # 保存圖片
-    image.load()
-    background = Image.new("RGB", image.size, (255, 255, 255))
-    background.paste(image, mask=image.split()[3])  # 3 is the alpha channel
-
-    background.save('public/ready.jpg', 'JPEG', quality=80)
-
-    # 上传图片到 Instagram
-    cl = Client()
-    cl.login(os.getenv('USERNAME'), os.getenv('PASSWORD'))
-    media = cl.photo_upload(
-        "public/ready.jpg",
-        "濱江匿名網5.0",
-        extra_data={
-            "custom_accessibility_caption": "alt text example",
-            "like_and_view_counts_disabled": 0,
-            "disable_comments": 0,
-        }
-    )
-    media.dict()
-    print("上傳了")
+    # 上傳圖片到 Instagram
+    try:
+        cl = Client()
+        cl.login(os.getenv('USERNAME'), os.getenv('PASSWORD'))
+        media = cl.photo_upload(
+            "public/ready.jpg",
+            "濱江匿名網5.0",
+            extra_data={
+                "custom_accessibility_caption": "alt text example",
+                "like_and_view_counts_disabled": 0,
+                "disable_comments": 0,
+            }
+        )
+        print("上傳成功！")
+    except Exception as e:
+        print(f"Instagram 上傳錯誤: {e}")
 
 
 @app.route('/process-user', methods=['POST', 'OPTIONS'])
@@ -86,11 +96,16 @@ def process_user_route():
                 'Access-Control-Allow-Headers': 'Content-Type',
             }
         )
-        print(response)
         return response
 
     user_text = request.json.get('user')
-    process_and_upload_to_instagram(user_text)
+
+    try:
+        process_and_upload_to_instagram(user_text)
+        return jsonify({"message": "成功處理並上傳到 Instagram"}), 200
+    except Exception as e:
+        print(f"API 錯誤: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
