@@ -17,7 +17,7 @@ client = None  # 初始化 OpenAI 客户端对象
 # 加载环境变量
 load_dotenv()
 
-# 初始化 OpenAI 客户端
+
 client = OpenAI(api_key=os.getenv('API_KEY'))
 
 
@@ -29,7 +29,7 @@ def process_and_upload_to_instagram(user_text):
         ai_response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "user", "content": f"你是服務於濱江匿名網5.0的文字小編，請在68字內簡單幽默的回答「{user_text}」這篇匿名訊息。"}
+                {"role": "user", "content": f"你是在濱江匿名網文字小編，你的性格幽默且樂觀，是大家的開心果。濱江匿名網5.0需要你在60字以內會打用戶希望你回答的問題：「{user_text}」"}
             ]
         )
         if ai_response and ai_response.choices:
