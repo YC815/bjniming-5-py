@@ -1,6 +1,6 @@
-Flask==3.0.0
-python-dotenv==1.0.1
-Pillow==10.2.0
-openai==1.63.2
-instagrapi==1.17.1
-flask_cors==5.0.0
+docutils==0.20.1
+numpy==2.2.5
+packaging==24.2
+PyYAML==6.0.1
+setuptools==69.2.0
+wheel==0.45.1

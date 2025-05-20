@@ -27,7 +27,7 @@ def process_and_upload_to_instagram(user_text):
     # 生成 AI 回應
     try:
         ai_response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "user", "content": f"你是在濱江匿名網文字小編，你的性格幽默且樂觀，是大家的開心果。濱江匿名網5.0需要你在60字以內會打用戶希望你回答的問題：「{user_text}」"}
             ]
@@ -86,6 +86,11 @@ def process_and_upload_to_instagram(user_text):
         print("上傳成功！")
     except Exception as e:
         print(f"Instagram 上傳錯誤: {e}")
+
+
+@app.route('/')
+def hello():
+    return 'Hello from Flask in Docker!'
 
 
 @app.route('/process-user', methods=['POST', 'OPTIONS'])
