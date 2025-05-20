@@ -11,7 +11,7 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 設定 Flask 的環境變數
-ENV FLASK_APP=app.py
+ENV FLASK_APP=main
 ENV FLASK_RUN_HOST=0.0.0.0
 
 # 開放 port
